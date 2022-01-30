@@ -18,10 +18,28 @@ def plot3D(xMeas, yMeas, zMeas, xKalman, yKalman, zKalman,):
     ax.legend()
     plt.show()
 
-def calculateKalman(measurements):
-    kf = KalmanFilter(dt=1, r = 0.6, q =0.001, xvals = 3, ndims = 3)
-    results = []
 
+# def calculateKalman(measurements):
+#     kf = KalmanFilter(dt=1/30, r = 0.1, q =0.2, xvals = 3, ndims = 3)
+#     results = []
+#     A = kf.get_A()
+#     print(A)
+
+#     for measurement in measurements:
+#         measArray = np.asarray([[measurement[0]],[measurement[1]],[measurement[2]]])
+#         x = kf.run(measArray)
+#         results.append((x[:3]).tolist())
+
+#     return results
+
+def calculateKalman(measurement,kf):
+    
+    measArray = np.asarray([[measurement[0]],[measurement[1]],[measurement[2]]])
+    x = kf.run(measArray)
+    return x[:3]
+
+def show_3D(measurements,kf):
+    results = []
     for measurement in measurements:
         measArray = np.asarray([[measurement[0]],[measurement[1]],[measurement[2]]])
         x = kf.run(measArray)
@@ -29,8 +47,9 @@ def calculateKalman(measurements):
 
     return results
 
-def runDemo(measurements):
-    results = calculateKalman(measurements)
+def runFinal(measurements):
+    kf = KalmanFilter(dt=1/30, r = 0.1, q =0.2, xvals = 3, ndims = 3)
+    results = show_3D(measurements,kf)
 
     xMeas, yMeas, zMeas = list(zip(*measurements))
     xKalman, yKalman, zKalman = list(zip(*results))

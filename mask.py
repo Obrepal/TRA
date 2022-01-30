@@ -29,6 +29,8 @@ cap = cv2.VideoCapture(1)
 if __name__ == "__main__":
 
     ball = tennisBall()
+    kf = KalmanFilter(dt=1/30, r = 0.1, q =0.2, xvals = 3, ndims = 3)
+
     cameraMatrix = cameraMatrix()
     f_x,f_y,c_x,c_y  = cameraMatrix.get_values()
     lower_green = ball.get_lower_value()
@@ -46,14 +48,11 @@ if __name__ == "__main__":
         dvideo = get_dvideo()
   
         blurred_frame = cv2.GaussianBlur(frame, (5,5), 0)
-
         hsv = cv2.cvtColor(blurred_frame, cv2.COLOR_BGR2HSV)
-
         mask = cv2.inRange(hsv,lower_green,higher_green)
-
         green_mask = cv2.bitwise_and(frame,frame, mask = mask )
-
         contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
 
         for contour in contours:
             area = cv2.contourArea(contour)
@@ -69,71 +68,74 @@ if __name__ == "__main__":
                 cv2.drawContours(frame, contour, -1, (0,255,0), 3)
                 pts.appendleft(center)
 
-                print(center)
-                print(depth[center2])
-
-                x_world = (int(M["m01"] / M["m00"])- c_x) * depth[center2] / f_x
-                y_world = (int(M["m10"] / M["m00"]) - c_y) * depth[center2] / f_y
-                print(x_world, y_world)
-        #
-        #  for i in np.arange(1, len(pts)):
-        #     thickness = int(np.sqrt(args["buffer"] / float(i + 1)) * 2.5)
-        #     cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
-        #     #print('done1')
-        #     if counter >= 10 and i == 1 and pts[-10] is not None:
-        #         #print('done2')
-        #         dX = pts[-10][0] - pts[i][0]
-        #         dY = pts[-10][1] - pts[i][1]
-        #         (dirX, dirY) = ("", "")
-        #         cv2.putText(frame, "dx: {}, dy: {}".format(dX, dY),
-        #         ( 10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
-        #         0.35, (0, 0, 255), 1)
+                x_world = (center2[0] - c_x) * depth[center2] / f_x
+                y_world = (center2[1] - c_y) * depth[center2] / f_y
+        
 
 
-        cv2.namedWindow('RGB image')        # Create a named window
-        cv2.moveWindow('RGB image', 40,300)  # Move it to (40,30)
+        # cv2.namedWindow('RGB image')        # Create a named window
+        # cv2.moveWindow('RGB image', 40,300)  # Move it to (40,30)
 
-        cv2.imshow('RGB image',frame)
-        cv2.imshow('Depth image',dvideo)
-        # plt.imshow(depth)
+        
       
-        #cv2.imshow('Depth image', depth)
-        # cv2.imshow('Mask image',mask)
-        # cv2.imshow ('Filtracja', green_mask)
 
-        coord.append(center2)
+        coord.append([x_world,y_world])
         coord_z.append(int(depth[center2]))
-        coord_full.append(center + (int(depth[center2]),))
+        coord_full.append([int(x_world),int(y_world),int(depth[center2])])
+        # print(coord_full[-1])
+
+        # KALMAN
+        predictions = calculateKalman(coord_full[-1],kf)
+       
+
+        x_screen = (predictions[0]/predictions[2] * f_x + c_x)
+        y_screen = (predictions[1]/predictions[2] * f_y + c_y)
+        
+
+        # x_screen = (x_world/depth[center2]) * f_x + c_x
+        # y_screen = (y_world/depth[center2]) * f_y + c_y
+
+        # print(coord_full[-1])
+        # print(int(x_screen),int(y_screen))
+        # print(int(x), int(y))
+
+        # print(int(x_world),int(y_world))
+        cv2.circle(frame, (int(y_screen),int(x_screen)), 5, (255, 0, 0), -1)
+        cv2.circle(frame, (int(x_screen),int(y_screen)), 5, (255, 100, 0), -1)
+
+        
+
+
+
+        cv2.imshow('Depth image',dvideo)
+        cv2.imshow('RGB image',frame)
+
+
+
 
         key = cv2.waitKey(1)
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
-        k = cv2.waitKey(5) & 0xFF
         if cv2.waitKey(33) == ord('a'):
             break
-        if k == 0:
-            break
-        # #print(pts)
-        # counter += 1
-        
+      
     cv2.destroyAllWindows()
         
-    runDemo(coord_full)
+    runFinal(coord_full)
 
 
-    ball.set_xy(coord)
-    ball.set_z(coord_z)
+    # ball.set_xy(coord)
+    # ball.set_z(coord_z)
+    print(coord_full)
     ball.set_full(coord_full)
 
 
-    ball.save_trajectory_xy()
-    ball.save_trajectory_z()
+    # ball.save_trajectory_xy()
+    # ball.save_trajectory_z()
     ball.save_trajectory_full()
 
-    xs = range(len(coord_z))
-    plt.plot(xs,coord_z)
-    plt.show()
-    print(ball.show_3D_trajectory())
+    # xs = range(len(coord_z))
+    # plt.plot(xs,coord_z)
+    # plt.show()
+    # print(ball.show_3D_trajectory())
 
     
 

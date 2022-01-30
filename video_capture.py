@@ -49,14 +49,16 @@ if __name__ == "__main__":
 
         cv2.imshow('Video depth image', dvideo)
     
-        out_rgb.write(frame)
-        #out_depth.write(depth)
-        out_dvideo.write(dvideo)
+        # out_rgb.write(frame)
+        # #out_depth.write(depth)
+        # out_dvideo.write(dvideo)
 
-        #quit program when 'esc' key is pressed
+        # #quit program when 'esc' key is pressed
         # save on pressing # 'y'
         if cv2.waitKey(1) & 0xFF == ord('y'):
-            cv2.imwrite('/Users/igorobrepalski/Desktop/f1.png', frame)
+            cv2.imwrite('/Users/igorobrepalski/Desktop/PD1_rgb.png', frame)
+            cv2.imwrite('/Users/igorobrepalski/Desktop/PD1_depth.png', depth)
+
 
         k = cv2.waitKey(5) & 0xFF
         if cv2.waitKey(33) == ord('a'):

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 class KalmanFilter:
 
-    def __init__(self, dt=1/30, ndims = 3, xvals = 3, zdims = None, pu = 100000000, A = np.array([None]), r=1, q=0.5):
+    def __init__(self, dt=1/30, ndims = 3, xvals = 3, zdims = None, pu = 100, A = np.array([None]), r=1, q=0.5):
      
         self.dt = float(dt) 
         self.ddt = (self.dt**2)/2
@@ -16,10 +16,16 @@ class KalmanFilter:
         #covariance matrix
         self.P = np.eye(xdims) * pu 
 
-        #state transition matrix
-        self.A = np.eye(xdims) + np.diag(tuple([self.dt] * (ndims)),(xdims-ndims))
-        self.A = self.A + np.diag(tuple([self.ddt]*(xdims-ndims)),ndims)  
-
+        self.A = np.array([[1, 0, 0 ,self.dt, 0, 0, self.ddt,0,0],
+                           [0, 1, 0, 0, self.dt, 0, 0,self.ddt,0],
+                           [0, 0, 1, 0, 0,self. dt, 0, 0,self.ddt],
+                           [0, 0, 0, 1, 0, 0, self.dt,0, 0],
+                           [0, 0, 0, 0, 1, 0, 0,self.dt, 0],
+                           [0, 0, 0, 0, 0, 1, 0, 0, self.dt],
+                           [0, 0, 0, 0, 0, 0, 1, 0, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 1, 0],
+                           [0, 0, 0, 0, 0, 0, 0, 0, 1],
+                          ])
 
         self.Q = np.eye(self.x.shape[0]) * q # process noise matrix
 
@@ -45,7 +51,7 @@ class KalmanFilter:
     def predict(self):
            
 
-          self.x = np.dot(self.A, self.x) + np.dot(self.B, self.u)
+          self.x = np.dot(self.A, self.x)
           self.P = np.dot(self.A, np.dot(self.P, self.A.T)) + self.Q
 
           self.lastResult = self.x
@@ -97,5 +103,7 @@ class KalmanFilter:
 
             return xUpdated
 
+    def get_A(self):
+        return self.A
 
 
